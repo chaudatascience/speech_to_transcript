@@ -19,7 +19,6 @@ class Net(nn.Module):
 
 net = Net()
 
-
 def get_grads(x, y, detach=False):
     y_pred = net(x)
     # loss = ctc_loss(y_pred, y, x_len, y_len)
@@ -93,10 +92,10 @@ if __name__ == '__main__':
     assert (client_grads["fc1.weight"] == client_grads_manually["dl/dw"] \
             and client_grads["fc1.bias"] == client_grads_manually["dl/db"])
 
-    x = torch.tensor([2.8], requires_grad=True)
-    y = torch.tensor([2.35], requires_grad=True)  # fix value of y
+    x = torch.tensor([1.1], requires_grad=True)
+    y = torch.tensor([1.35], requires_grad=True)  # fix value of y
 
-    for _ in range(10):
+    for _ in range(1000):
         ## get gradient dl/dw, dl/dx
         grads = get_grads(x, y)
         grads_manually = get_grad_manually(x, y, net.state_dict()['fc1.weight'], net.state_dict()['fc1.bias'])
@@ -115,7 +114,7 @@ if __name__ == '__main__':
 
 
         ## second derivative w.r.t. x, y
-        grad_2nd = grad(grad_dist, (x, y))
+        grad_2nd = grad(grad_dist,(x, y))
         grad_2nd_manually = get_2nd_grad_manually(x, y, net.state_dict()['fc1.weight'], net.state_dict()['fc1.bias'],
                                                 client_grads_manually["dl/dw"], client_grads_manually["dl/db"])
         print("grad_2nd_manually : ", grad_2nd_manually)
@@ -123,9 +122,10 @@ if __name__ == '__main__':
 
 
         ## Update x, y
+        lr = 1e-3
         with torch.no_grad():
-            x -= grad_2nd_manually[0].item() * 0000.1
-            y -= grad_2nd_manually[1].item() * 0000.1
+            x -= grad_2nd_manually[0].item() * lr
+            y -= grad_2nd_manually[1].item() * lr
 
 
         # make_dot(grad_dist, params=dict(net.named_parameters()), show_saved=True).render("norm_loss", format="png")
